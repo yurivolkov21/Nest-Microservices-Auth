@@ -37,7 +37,7 @@ export class AuthService {
     return {
       access_token,
       token_type: 'Bearer',
-      expires_in: Number(process.env.JWT_EXPIRES_IN),
+      expires_in: Number(process.env.JWT_EXPIRES),
     };
   }
 }
