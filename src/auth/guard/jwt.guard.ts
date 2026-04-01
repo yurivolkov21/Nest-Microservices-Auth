@@ -7,13 +7,14 @@ import {
 import { JwtService } from '@nestjs/jwt';
 import type { Request } from 'express';
 import { JwtPayload } from '../interfaces/jwt-payload.interface';
+import { RequestWithUser } from '../interfaces/request-with-user.interface';
 
 @Injectable()
 export class JwtGuard implements CanActivate {
   constructor(private readonly jwtService: JwtService) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    const request = context.switchToHttp().getRequest<Request>();
+    const request = context.switchToHttp().getRequest<RequestWithUser>();
     const token = this.extractTokenFromHeader(request);
 
     if (!token) {
@@ -21,11 +22,13 @@ export class JwtGuard implements CanActivate {
     }
 
     try {
-      const payload = await this.jwtService.verifyAsync<JwtPayload>(token);
-      // Gán payload vào request để sử dụng trong controller
-      (request as Request & { user: JwtPayload }).user = payload;
-    } catch {
-      throw new UnauthorizedException('Invalid token');
+      const payload = await this.jwtService.verifyAsync<JwtPayload>(token, {
+        secret: process.env.JWT_SECRET,
+      });
+      // Type-safe assignment với RequestWithUser interface
+      request.user = payload;
+    } catch (error) {
+      throw new UnauthorizedException('Invalid or expired token');
     }
 
     return true;

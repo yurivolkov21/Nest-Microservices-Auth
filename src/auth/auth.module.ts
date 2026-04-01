@@ -11,12 +11,31 @@ import { JwtModule } from '@nestjs/jwt';
     ConfigModule,
     JwtModule.registerAsync({
       global: true,
-      useFactory: () => ({
-        secret: process.env.JWT_SECRET,
-        signOptions: {
-          expiresIn: Number(process.env.JWT_EXPIRES),
-        },
-      }),
+      useFactory: () => {
+        const secret = process.env.JWT_SECRET;
+        const expiresIn = parseInt(process.env.JWT_EXPIRES ?? '86400', 10);
+        const issuer = process.env.JWT_ISSUER;
+        const audience = process.env.JWT_AUDIENCE;
+
+        if (!secret) {
+          throw new Error('JWT_SECRET environment variable is not defined');
+        }
+
+        if (isNaN(expiresIn) || expiresIn <= 0) {
+          throw new Error(
+            'JWT_EXPIRES must be a valid positive number (in seconds)',
+          );
+        }
+
+        return {
+          secret,
+          signOptions: {
+            expiresIn,
+            ...(issuer ? { issuer } : {}),
+            ...(audience ? { audience } : {}),
+          },
+        };
+      },
     }),
   ],
   controllers: [AuthController],
