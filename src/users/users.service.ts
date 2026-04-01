@@ -1,11 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { User, UserDocument } from './entities/user.entity';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 
 // Type cho lean() query result
 type UserLean = {
-  _id: any;
+  _id: Types.ObjectId;
   email: string;
   passwordHash: string;
   roles: string[];

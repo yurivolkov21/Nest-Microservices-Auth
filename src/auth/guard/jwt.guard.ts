@@ -27,7 +27,7 @@ export class JwtGuard implements CanActivate {
       });
       // Type-safe assignment với RequestWithUser interface
       request.user = payload;
-    } catch (error) {
+    } catch {
       throw new UnauthorizedException('Invalid or expired token');
     }
 

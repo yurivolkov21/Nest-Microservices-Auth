@@ -62,9 +62,9 @@ export class AuthService {
   private sign(sub: string, email: string, roles: string[]): AuthResponse {
     const payload: JwtPayload = { sub, email, roles };
     const access_token = this.jwtService.sign(payload);
-    
+
     const expiresIn = parseInt(process.env.JWT_EXPIRES ?? '86400', 10);
-    
+
     return {
       access_token,
       token_type: 'Bearer',
