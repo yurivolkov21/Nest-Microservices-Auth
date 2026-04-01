@@ -5,26 +5,36 @@ import {
   Injectable,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { JwtService } from '@nestjs/jwt';
+import { RequestWithUser } from '../interfaces/request-with-user.interface';
 
 @Injectable()
 export class RoleGuard implements CanActivate {
-  constructor(
-    private reflector: Reflector,
-    private jwt: JwtService,
-  ) {}
+  constructor(private readonly reflector: Reflector) {}
 
   canActivate(ctx: ExecutionContext): boolean {
-    const roles = this.reflector.get<string[]>('roles', ctx.getHandler());
-    if (!roles?.length) return true;
+    const requiredRoles = this.reflector.get<string[]>(
+      'roles',
+      ctx.getHandler(),
+    );
 
-    const req = ctx.switchToHttp().getRequest();
-    const header = req.headers.authorization || '';
-    const token = header.startsWith('Bearer ') ? header.slice(7) : '';
-    const payload = this.jwt.verify(token);
-    const ok = payload.roles?.some((r: string) => roles.includes(r));
+    // Nếu không yêu cầu role cụ thể, cho phép truy cập
+    if (!requiredRoles?.length) return true;
 
-    if (!ok) throw new ForbiddenException('Insufficient role');
+    const req = ctx.switchToHttp().getRequest<RequestWithUser>();
+    const user = req.user; // Lấy từ JwtGuard đã gán vào request
+
+    if (!user?.roles) {
+      throw new ForbiddenException('No roles found');
+    }
+
+    const hasRole = user.roles.some((role: string) =>
+      requiredRoles.includes(role),
+    );
+
+    if (!hasRole) {
+      throw new ForbiddenException('Insufficient permissions');
+    }
+
     return true;
   }
 }
